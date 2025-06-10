@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
@@ -17,6 +11,11 @@ datasource db {
 enum UserRole {
   STUDENT
   ADMIN
+}
+
+enum GroupMemberRole{
+  LEADER
+  MEMBER
 }
 
 model User {
@@ -33,20 +32,57 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  enrollments Enrollment[]
+  group Group[]
+  member GroupMember[]
 }
 
 model Cohort {
-  id       Int     @id
+  id       String     @id
   name     String
   isActive Boolean
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  enrollments Enrollment[]
+  groups Group[]
+  
 }
 
 model Group {
-  id           String  @id
+  id           String  @id @default(uuid())
   name         String
+  cohortId String
+  leaderId String
   isActive     Boolean
   isRecruiting Boolean
+
+  members GroupMember[]
+
+  cohort Cohort @relation(fields: [cohortId], references: [id])
+  leader User @relation(fields: [leaderId], references: [id])
+}
+
+model Enrollment{
+  userId String
+  cohortId String
+
+  @@id([userId, cohortId])
+
+  user User @relation(fields: [userId], references: [id])
+  cohort Cohort @relation(fields: [cohortId], references: [id])
+
+}
+
+model GroupMember{
+  id String @id
+  groupId String
+  userId String
+  role GroupMemberRole @default(MEMBER)
+
+  group Group @relation(fields: [groupId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
 }
