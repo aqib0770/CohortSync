@@ -21,3 +21,11 @@ export const isLoggedIn = (req, res, next) => {
     return res.status(401).json({ error: "Invalid or expired token" });
   }
 };
+
+export const isAdmin = (req, res, next) => {
+  console.log(req.user);
+  if (!req.user || req.user.role !== "ADMIN") {
+    return res.status(403).send("Fobidden");
+  }
+  next();
+};

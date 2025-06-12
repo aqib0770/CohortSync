@@ -6,12 +6,18 @@ import {
   logoutUser,
   registerUsersCSV,
 } from "../controllers/auth.controllers.js";
-import { isLoggedIn } from "../middleware/auth.middleware.js";
+import { isAdmin, isLoggedIn } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
 
-router.post("/register", upload.single("file"), registerUsersCSV);
+router.post(
+  "/register",
+  upload.single("file"),
+  isLoggedIn,
+  isAdmin,
+  registerUsersCSV
+);
 router.post("/login", loginUser);
 router.get("/profile", isLoggedIn, getProfile);
 router.get("/logout", isLoggedIn, logoutUser);
