@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  STUDENT
+  ADMIN
+}
+
+enum GroupMemberRole {
+  LEADER
+  MEMBER
+}
+
+enum ActivityType {
+  ACCOUNT_CREATED
+  COHORT_JOINED
+  GROUP_CREATED
+  GROUP_JOINED
+  GROUP_LEFT
+  GROUP_DELETED
+  MEMBER_REMOVED
+  MEMBER_LEFT
+}
+
+model User {
+  id             String   @id @default(uuid())
+  firstName      String
+  lastName       String?
+  email          String   @unique
+  passwordHash   String
+  role           UserRole @default(STUDENT)
+  githubUsername String?
+  linkedInUrl    String?
+  XUrl           String?
+  PeerlistUrl    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  enrollments Enrollment[]
+  group       Group[]
+  member      GroupMember[]
+  notice      NoticeBoard[]
+  activity    ActivityLog[]
+}
+
+model Cohort {
+  id       String  @id @unique @default(uuid())
+  name     String
+  isActive Boolean
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  enrollments Enrollment[]
+  groups      Group[]
+}
+
+model Group {
+  id           String  @id @default(uuid())
+  name         String
+  cohortId     String
+  leaderId     String
+  isActive     Boolean
+  isRecruiting Boolean
+
+  members GroupMember[]
+
+  cohort Cohort        @relation(fields: [cohortId], references: [id])
+  leader User          @relation(fields: [leaderId], references: [id])
+  notice NoticeBoard[]
+}
+
+model Enrollment {
+  userId   String
+  cohortId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  cohort Cohort @relation(fields: [cohortId], references: [id])
+
+  @@id([userId, cohortId])
+}
+
+model GroupMember {
+  id      String          @id
+  groupId String
+  userId  String          @unique
+  role    GroupMemberRole @default(MEMBER)
+
+  group Group @relation(fields: [groupId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+}
+
+model NoticeBoard {
+  id       String @id @default(uuid())
+  groupId  String
+  authorId String
+  content  String
+
+  group  Group @relation(fields: [groupId], references: [id])
+  author User  @relation(fields: [authorId], references: [id])
+}
+
+model ActivityLog {
+  id           String       @id @default(uuid())
+  userId       String
+  activityType ActivityType
+  description  String?
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
